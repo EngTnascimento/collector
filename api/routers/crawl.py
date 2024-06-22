@@ -1,14 +1,17 @@
 from fastapi import APIRouter, HTTPException
+
+from api.models.url import CrawlerRequest
 from core.crawler import Crawler
-from api.models.url import UrlList
 
 router = APIRouter()
 
-@router.post("/crawl/")
-async def crawl_urls_handler(urls: UrlList):
+
+@router.post("/crawl")
+async def crawl_urls_handler(request: CrawlerRequest):
     try:
+        print(f"Handling crawler for {request.urls}")
         crawler = Crawler()
-        job_id = await crawler.crawl(urls.urls)
-        return {"message": "Crawling initiated successfully", "job_id": job_id}
+        items = await crawler.crawl(request)
+        return {"message": "Crawling initiated successfully", "items": items}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

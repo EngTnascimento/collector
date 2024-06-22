@@ -1,4 +1,5 @@
 from pydantic import BaseModel
 
-class UrlList(BaseModel):
+
+class CrawlerRequest(BaseModel):
     urls: list[str]
