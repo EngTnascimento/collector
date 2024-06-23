@@ -12,7 +12,6 @@ from core.spiders.company_spider import CompanySpider
 
 logging_settings.configure_logging()
 
-# Install the asyncio reactor
 try:
     asyncioreactor.install()
 except Exception as e:
@@ -28,6 +27,7 @@ class Crawler:
 
     def __item_scraped(self, item, response, spider):
         logging_settings.items_logger.info(f"Item scraped: {item}")
+        logging_settings.logger.info(f"Item scraped: {item}")
         logging_settings.items_logger.debug(f"Respose: {response}")
         logging_settings.items_logger.debug(f"Spider: {spider}")
         # self.items.append(item)

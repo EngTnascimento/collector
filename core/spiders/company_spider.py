@@ -1,27 +1,37 @@
+from urllib.parse import urlparse
+
 import scrapy
 
-from core.
+from core.items import CompanyItem
 
 
 class CompanySpider(scrapy.Spider):
     name = "companySpider"
 
-    def __init__(self, domain=None, *args, **kwargs):
+    def __init__(self, urls: list[str], *args, **kwargs):
+        print(f"scannig urls => {urls}")
         super(CompanySpider, self).__init__(*args, **kwargs)
-        self.allowed_domains = [domain]
-        self.start_urls = [f"http://{domain}"]
+        self.start_urls = urls
+        self.allowed_domains = [
+            self.normalize_domain(urlparse(url).netloc) for url in urls
+        ]
+
+    def normalize_domain(self, domain):
+        if domain.startswith("www."):
+            domain = domain[4:]
+        return domain
 
     def parse(self, response):  # pyright: ignore
-        # Extract specific data of interest
-        for data in response.css("article, div.content, .product"):
-            item = {}
-            item["title"] = data.css("h1::text").get()
-            item["description"] = data.css(".description::text").get()
-            item["image_url"] = data.css("img::attr(src)").get()
-            item["link"] = data.css("a::attr(href)").get()
-            yield item
+        item = CompanyItem()
+        item["url"] = response.url
+        item["content"] = response.body.decode(response.encoding)
+        yield item
 
         for href in response.css("a::attr(href)").getall():
             url = response.urljoin(href)
+            if self.is_allowed_domain(url):
+                yield scrapy.Request(url, callback=self.parse)
 
-            yield scrapy.Request(url, callback=self.parse)
+    def is_allowed_domain(self, url):
+        domain = self.normalize_domain(urlparse(url).netloc)
+        return domain in self.allowed_domains
