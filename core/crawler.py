@@ -1,50 +1,59 @@
+from scrapy.crawler import CrawlerProcess, CrawlerRunner, Deferred
+from scrapy.utils.defer import deferred_to_future
+from twisted.internet.asyncioreactor import install as install_asyncio_reactor
+from twisted.internet import reactor, defer
+from api.models.url import CrawlerRequest
+from core.config import logging_settings as logset
+from core.config import scrapy_settings
+from core.handler import SignalHandler
+from core.spiders.company_spider import CompanySpider
+from core.spiders.simple_spider import TestSpider
+from scrapy.utils.reactor import is_asyncio_reactor_installed
+from fastapi import HTTPException
+from scrapy.utils.reactor import install_reactor
+import threading
 import asyncio
 
-from scrapy import signals
-from scrapy.crawler import CrawlerRunner, Deferred
-from scrapy.signalmanager import dispatcher
-from scrapy.utils.reactor import asyncioreactor
-from twisted.internet import reactor
 
-from api.models.url import CrawlerRequest
-from core.config import logging_settings, scrapy_settings
-from core.spiders.company_spider import CompanySpider
-
-logging_settings.configure_logging()
-
-try:
-    asyncioreactor.install()
-except Exception as e:
-    if "reactor already installed" not in str(e):
-        raise
+logset.configure_logging(__name__)
 
 
 class Crawler:
     def __init__(self):
-        self.runner = CrawlerRunner(scrapy_settings.model_dump())
+        self.signal_handler = SignalHandler()
+        self.process = CrawlerProcess(settings=scrapy_settings.model_dump())
         self.items = []
-        dispatcher.connect(self.__item_scraped, signal=signals.item_scraped)
+        self.is_reactor_running = False
+        self.lock = threading.Lock()
+        self.signal_handler.start()
 
-    def __item_scraped(self, item, response, spider):
-        logging_settings.items_logger.info(f"Item scraped: {item}")
-        logging_settings.logger.info(f"Item scraped: {item}")
-        logging_settings.items_logger.debug(f"Respose: {response}")
-        logging_settings.items_logger.debug(f"Spider: {spider}")
-        # self.items.append(item)
 
-    def __crawl(self, urls: list[str]):
+    async def __crawl(self, urls: list[str]):
         try:
-            logging_settings.logger.info(f"Starting crawl with URLs: {urls}")
-            d: Deferred = self.runner.crawl(CompanySpider, start_urls=urls)
-            d.addBoth(lambda _: reactor.stop())  # pyright: ignore
-            reactor.run()  # pyright: ignore
-            logging_settings.logger.info("Crawl finished successfully.")
-            return d
+            logset.logger.info(f"Starting crawl with URLs: {urls}")
+            if not self.is_reactor_running:
+                reactor_thread = threading.Thread(target=reactor.run, kwargs={'installSignalHandlers': False})
+                reactor_thread.start()
+                self.is_reactor_running = True
+
+            def __crawl_spider():
+                deferred = self.process.crawl(CompanySpider, start_urls=urls)
+                deferred.addBoth(lambda _: reactor.callFromThread(reactor.stop))
+
+            with self.lock:
+                reactor.callFromThread(__crawl_spider)
+
+            logset.logger.info("Crawl finished successfully.")
+
         except Exception as e:
-            logging_settings.logger.error(f"Error during crawl: {e}", exc_info=True)
-            raise
+            logset.logger.error(f"Error during crawl: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def crawl(self, request: CrawlerRequest):
-        logging_settings.logger.info(f"Handling crawler for {request.urls}")
-        await self.__crawl(request.urls)
-        return []
+        logset.logger.info(f"Handling crawler for {request.urls}")
+        try:
+            await self.__crawl(request.urls)
+            return []
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
