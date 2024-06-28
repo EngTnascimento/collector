@@ -1,11 +1,11 @@
 from api.interface.queue import send_item
-from core.config import logging_settings as logset
+from core.config.logging import basic_logger
 
-logset.configure_logging(__name__)
+logger = basic_logger(__name__)
 
 
 class ItemPipeline:
     def process_item(self, item, spider):
-        # logset.items_logger.debug(f"Item scraped:\n{item['text_content']}")
+        logger.info(f"Enqueuing item for {item['url']}")
         send_item(item)
         return item

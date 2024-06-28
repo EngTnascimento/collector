@@ -5,12 +5,12 @@ from scrapy.crawler import CrawlerProcess
 from twisted.internet import reactor
 
 from api.models.url import CrawlerRequest
-from core.config import logging_settings as logset
 from core.config import scrapy_settings
+from core.config.logging import basic_logger
 from core.handlers.scrapy_signals import SignalHandler
 from core.spiders.company_spider import CompanySpider
 
-logset.configure_logging(__name__)
+logger = basic_logger(__name__)
 
 
 class Crawler:
@@ -24,7 +24,7 @@ class Crawler:
 
     async def __crawl(self, urls: list[str]):
         try:
-            logset.logger.info(f"Starting crawl with URLs: {urls}")
+            logger.info(f"Starting crawl with URLs: {urls}")
             if not self.is_reactor_running:
                 reactor_thread = threading.Thread(
                     target=reactor.run, kwargs={"installSignalHandlers": False}
@@ -39,14 +39,14 @@ class Crawler:
             with self.lock:
                 reactor.callFromThread(__crawl_spider)
 
-            logset.logger.info("Crawl finished successfully.")
+            logger.info("Crawl finished successfully.")
 
         except Exception as e:
-            logset.logger.error(f"Error during crawl: {e}", exc_info=True)
+            logger.error(f"Error during crawl: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail=str(e))
 
     async def crawl(self, request: CrawlerRequest):
-        logset.logger.info(f"Handling crawler for {request.urls}")
+        logger.info(f"Handling crawler for {request.urls}")
         try:
             await self.__crawl(request.urls)
             return []

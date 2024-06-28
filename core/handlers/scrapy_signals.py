@@ -1,9 +1,9 @@
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
 
-from core.config import logging_settings as logset
+from core.config.logging import basic_logger
 
-logset.configure_logging(__name__)
+logger = basic_logger(__name__)
 
 
 class SignalHandler:
@@ -20,37 +20,37 @@ class SignalHandler:
         dispatcher.connect(self.response_downloaded, signal=signals.response_downloaded)
 
     def engine_started(self):
-        logset.logger.info("Scrapy engine started")
+        logger.info("Scrapy engine started")
 
     def engine_stopped(self):
-        logset.logger.info("Scrapy engine stopped")
+        logger.info("Scrapy engine stopped")
 
     def spider_opened(self, spider):
-        logset.logger.info(f"Spider {spider.name} opened")
+        logger.info(f"Spider {spider.name} opened")
 
     def spider_closed(self, spider, reason):
-        logset.logger.info(f"Spider {spider.name} closed: {reason}")
+        logger.info(f"Spider {spider.name} closed: {reason}")
 
     def item_scraped(self, item, response, spider):
         pass
 
     def item_dropped(self, item, response, spider, exception):
-        logset.logger.warning(f"Item dropped: {item} (exception: {exception})")
-        logset.logger.debug(f"Response: {response}")
-        logset.logger.debug(f"Spider: {spider.name}")
+        logger.warning(f"Item dropped: {item} (exception: {exception})")
+        logger.debug(f"Response: {response}")
+        logger.debug(f"Spider: {spider.name}")
 
     def request_scheduled(self, request, spider):
-        logset.logger.debug(f"Request scheduled: {request} for spider {spider.name}")
+        logger.debug(f"Request scheduled: {request} for spider {spider.name}")
 
     def request_dropped(self, request, spider):
-        logset.logger.warning(f"Request dropped: {request} for spider {spider.name}")
+        logger.warning(f"Request dropped: {request} for spider {spider.name}")
 
     def response_received(self, response, request, spider):
-        logset.logger.debug(
+        logger.debug(
             f"Response received: {response} for request {request} in spider {spider.name}"
         )
 
     def response_downloaded(self, response, request, spider):
-        logset.logger.debug(
+        logger.debug(
             f"Response downloaded: {response} for request {request} in spider {spider.name}"
         )

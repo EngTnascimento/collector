@@ -4,10 +4,10 @@ import scrapy
 from scrapy.linkextractors import LinkExtractor
 from scrapy.spiders import Rule
 
-from core.config import logging_settings as logset
+from core.config.logging import basic_logger
 from core.items import CompanyItem
 
-logset.configure_logging(__name__)
+logger = basic_logger(__name__)
 
 
 class CompanySpider(scrapy.Spider):
@@ -25,7 +25,7 @@ class CompanySpider(scrapy.Spider):
                 LinkExtractor(allow=(), restrict_css="a"), callback="parse", follow=True
             ),
         )
-        logset.logger.debug(f"Allowed Domains: {self.allowed_domains}")
+        logger.debug(f"Allowed Domains: {self.allowed_domains}")
         self.visited_urls: set = set()
 
     def normalize_domain(self, domain):
