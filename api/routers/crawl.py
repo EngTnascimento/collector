@@ -14,7 +14,7 @@ logger = basic_logger(__name__)
 async def crawl_urls_handler(request: CrawlerRequest):
     try:
         logger.info(f"Handling crawler for {request.urls}")
-        items = await crawler.crawl(request)
-        return {"message": "Crawling initiated successfully", "items": items}
+        await crawler.crawl(request)
+        return {"message": "Crawling initiated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

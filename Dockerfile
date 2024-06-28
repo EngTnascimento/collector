@@ -4,8 +4,13 @@ WORKDIR /app
 
 COPY . .
 
-RUN apk update && apk add --no-cache git && pip install --no-cache-dir -r requirements.txt
+ARG RABBITMQ_PASSWORD
+
+ENV RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+
+RUN apk update && apk add --no-cache git && \
+  pip install --no-cache-dir -r requirements.txt
 
 EXPOSE 8000
 
-CMD ["uvicorn", "run:app", "--reload"]
+CMD ["python", "run.py"]

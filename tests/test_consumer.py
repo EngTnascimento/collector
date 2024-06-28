@@ -9,7 +9,9 @@ def process_message(message):
 
 
 def test_text_content_consumer():
-    text_queue = RabbitMQ(queue="text_item", MessageModel=TextContentMessage)
+    text_queue = RabbitMQ(
+        consumer=True, queue="text_item", MessageModel=TextContentMessage
+    )
 
     text_queue.consume(process_message)
 
