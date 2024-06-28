@@ -1,5 +1,3 @@
-import time
-
 import pytest
 from queue_interface.rabbitMQ import RabbitMQ
 
