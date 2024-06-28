@@ -1,17 +1,6 @@
 import logging
-from typing import ClassVar
 
 from pydantic_settings import BaseSettings
-
-
-class MainSettings(BaseSettings):
-    app_port: int = 8000
-
-
-class MinioSettings(BaseSettings):
-    minio_key: str = "admin"
-    minio_secret: str = "SsG7Wh0gAT"
-    minio_endpoint: str = "http://localhost:9000"
 
 
 class LoggingSettings(BaseSettings):
@@ -44,25 +33,3 @@ class LoggingSettings(BaseSettings):
                 self.items_logger.removeHandler(handler)
         self.items_logger.setLevel(logging.DEBUG)
         self.items_logger.addHandler(items_handler)
-
-
-class ScrapySettings(BaseSettings):
-    BOT_NAME: str = "Company Crawler"
-    SPIDER_MODULES: list[str] = ["core.spiders"]
-    NEWSPIDER_MODULE: str = "core.spiders"
-    CONCURRENT_REQUESTS: int = 16
-    DOWNLOAD_DELAY: int = 1
-    AUTOTHROTTLE_ENABLED: bool = True
-    AUTOTHROTTLE_START_DELAY: int = 5
-    AUTOTHROTTLE_MAX_DELAY: int = 60
-    AUTOTHROTTLE_TARGET_CONCURRENCY: float = 1.0
-    AUTOTHROTTLE_DEBUG: bool = False
-    ITEM_PIPELINES: dict = {"core.pipelines.ItemPipeline": 100}
-    TWISTED_REACTOR: ClassVar[str] = 'twisted.internet.asyncioreactor.AsyncioSelectorReactor'
-
-
-
-main_settings = MainSettings()
-minio_settings = MinioSettings()
-logging_settings = LoggingSettings()
-scrapy_settings = ScrapySettings()

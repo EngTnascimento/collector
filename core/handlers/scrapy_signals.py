@@ -1,4 +1,3 @@
-import logging
 from scrapy import signals
 from scrapy.signalmanager import dispatcher
 

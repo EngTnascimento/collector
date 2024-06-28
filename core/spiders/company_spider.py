@@ -1,13 +1,11 @@
 from urllib.parse import urlparse
 
 import scrapy
-from scrapy import signals
-from scrapy.signalmanager import dispatcher
+from scrapy.linkextractors import LinkExtractor
+from scrapy.spiders import Rule
 
 from core.config import logging_settings as logset
 from core.items import CompanyItem
-from scrapy.spiders import CrawlSpider, Rule
-from scrapy.linkextractors import LinkExtractor
 
 logset.configure_logging(__name__)
 
@@ -23,7 +21,9 @@ class CompanySpider(scrapy.Spider):
             self.normalize_domain(urlparse(url).netloc) for url in start_urls
         ]
         self.rules = (
-            Rule(LinkExtractor(allow=(), restrict_css='a'), callback='parse', follow=True),
+            Rule(
+                LinkExtractor(allow=(), restrict_css="a"), callback="parse", follow=True
+            ),
         )
         logset.logger.debug(f"Allowed Domains: {self.allowed_domains}")
         self.visited_urls: set = set()
@@ -36,6 +36,9 @@ class CompanySpider(scrapy.Spider):
     def parse(self, response):  # pyright: ignore
         item = CompanyItem()
         item["url"] = response.url
+        parsed_url = urlparse(response.url)
+        self.root_domain = self.normalize_domain(parsed_url.netloc)
+        item["root_domain"] = self.root_domain
         item["full_content"] = response.text
         item["text_content"] = response.css("*::text").getall()
 
