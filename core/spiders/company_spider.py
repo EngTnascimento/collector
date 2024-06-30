@@ -39,7 +39,7 @@ class CompanySpider(scrapy.Spider):
         parsed_url = urlparse(response.url)
         self.root_domain = self.normalize_domain(parsed_url.netloc)
         item["root_domain"] = self.root_domain
-        item["full_content"] = response.text
+        item["full_content"] = response.body
         item["text_content"] = response.css("*::text").getall()
 
         yield item
